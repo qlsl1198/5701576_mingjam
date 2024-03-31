@@ -12,29 +12,21 @@ typedef struct polynomial {
 
 // 함수 선언
 void print_polynomial(polynomial p);
-polynomial add_polynomial(polynomial A, polynomial B);
-polynomial multiply_polynomial(polynomial A, polynomial B);
+polynomial poly_mult(polynomial A, polynomial B);
 
 // 주어진 두 다항식
-polynomial a = { 5, {3.0, 6.0, 0.0, 0.0, 0.0, 10.0} };
-polynomial b = { 4, {7.0, 0.0, 5.0, 0.0, 1.0} };
+polynomial a = { 6, {7,0,0,5,9,0,1} };
+polynomial b = { 3, {5,2,1,10} };
 
 int main(void) {
     // 주어진 다항식 출력
-    printf("Polynomial a           :");
     print_polynomial(a);
-    printf("Polynomial b           :");
     print_polynomial(b);
-
-    // 다항식 덧셈
-    polynomial sum = add_polynomial(a, b);
-    printf("Sum of polynomials     :");
-    print_polynomial(sum);
+    printf("--------------------------------------------------------------------------------\n");
 
     // 다항식 곱셈
-    polynomial product = multiply_polynomial(a, b);
-    printf("Product of polynomials :");
-    print_polynomial(product);
+    polynomial c = poly_mult(a, b);
+    print_polynomial(c);
 
     return 0;
 }
@@ -47,46 +39,18 @@ void print_polynomial(polynomial p) {
     printf("%3.1f\n", p.coef[p.degree]);
 }
 
-// 두 다항식을 더하는 함수
-polynomial add_polynomial(polynomial A, polynomial B) {
-    polynomial C; //결과 다항식
-    memset(C.coef, 0, sizeof(float) * MAX_DEGREE); // C 배열을 0으로 초기화
-
-    int Apos = 0, Bpos = 0, Cpos = 0;
-    int degree_a = A.degree;
-    int degree_b = B.degree;
-
-    // C의 최고 차수
-    C.degree = (A.degree > B.degree) ? A.degree : B.degree;
-
-    while (Apos <= A.degree && Bpos <= B.degree) {
-        if (degree_a > degree_b) {
-            C.coef[Cpos++] = A.coef[Apos++];
-            degree_a--;
-        }
-        else if (degree_a == degree_b) {
-            C.coef[Cpos++] = A.coef[Apos++] + B.coef[Bpos++];
-            degree_a--; degree_b--;
-        }
-        else {
-            C.coef[Cpos++] = B.coef[Bpos++];
-            degree_b--;
-        }
-    }
-    return C;
-}
 
 // 두 다항식을 곱하는 함수
-polynomial multiply_polynomial(polynomial A, polynomial B) {
-    polynomial D; // 결과 다항식
-    memset(D.coef, 0, sizeof(float) * MAX_DEGREE); // D 배열을 0으로 초기화
+polynomial poly_mult(polynomial A, polynomial B) {
+    polynomial C; // 결과 다항식
+    memset(C.coef, 0, sizeof(float) * MAX_DEGREE); // C 배열을 0으로 초기화
 
-    D.degree = A.degree + B.degree; // D 의 최고 차수
+    C.degree = A.degree + B.degree; // C 의 최고 차수
 
     for (int i = 0; i <= A.degree; i++) {
         for (int j = 0; j <= B.degree; j++) {
-            D.coef[i + j] += A.coef[i] * B.coef[j];
+            C.coef[i + j] += A.coef[i] * B.coef[j];
         }
     }
-    return D;
+    return C;
 }
