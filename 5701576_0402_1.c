@@ -19,6 +19,7 @@ void print_poly(int s, int e);
 // ´ÙÇ×½Ä °ö¼À ÇÔ¼ö ¼±¾ð
 void poly_multiply(int As, int Ae, int Bs, int Be, int* Csp, int* Cep);
 
+
 int main() {
     int As = 0, Ae = 3, Bs = 4, Be = 6, Cs, Ce;
 
