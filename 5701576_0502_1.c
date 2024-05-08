@@ -100,7 +100,6 @@ int is_palindrome(char* str) {
     return 1;
 }
 
-
 int main() {
     char str[100];
     int choice;
