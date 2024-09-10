@@ -116,15 +116,13 @@ void LinkOrders(TreeNode* root) {
 
 int main(){
     int arr[15];
-    TreeNode *root = createNode(1); // root 노드 초기화
+    TreeNode *root = createNode(1);
 
     GenerateArrayTree(arr);
-    GenerateLinkTree(root); // root를 인자로 전달
+    GenerateLinkTree(root);
 
-    printf("배열 기반 트리 순회:\n");
+
     ArrayOrders(arr);
-
-    printf("\n연결 리스트 기반 트리 순회:\n");
     LinkOrders(root);
     
     return 0;
