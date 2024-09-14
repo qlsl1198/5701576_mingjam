@@ -31,11 +31,10 @@ void freeStack(Stack* s);
 void freeTree(TreeNode* root);
 
 int main() {
-    TreeNode* root = createNode(1);
+    TreeNode *root = createNode(0); 
+    root->data = 1;  
     GenerateLinkTree(root);
-    printf("순회 결과:\n");
     LinkOrders(root);
-    freeTree(root);
     return 0;
 }
 
@@ -78,19 +77,20 @@ void GenerateLinkTree(TreeNode* root) {
 
 void LinkPreOrder(TreeNode* root) {
     Stack* s = createStack();
-    TreeNode* current = root;
-    printf("전위 순회: ");
-    while (current != NULL || !isEmptyStack(s)) {
-        while (current != NULL) {
-            printf("push(%d) ", current->data);
-            push(s, current);
-            printf("visit(%d) ", current->data);
-            current = current->left;
+    printf("push(%d) ", root->data);
+    push(s, root);
+    printf("전위 순회:\n");
+    while (!isEmptyStack(s)) {
+        TreeNode* current = pop(s);
+        printf("pop(%d) ", current->data);
+        printf("visit(%d)\n", current->data);
+        if (current->right) {
+            printf("push(%d) ", current->right->data);
+            push(s, current->right);
         }
-        if (!isEmptyStack(s)) {
-            current = pop(s);
-            printf("pop(%d) ", current->data);
-            current = current->right;
+        if (current->left) {
+            printf("push(%d) ", current->left->data);
+            push(s, current->left);
         }
     }
     printf("\n");
@@ -100,7 +100,7 @@ void LinkPreOrder(TreeNode* root) {
 void LinkInOrder(TreeNode* root) {
     Stack* s = createStack();
     TreeNode* current = root;
-    printf("중위 순회: ");
+    printf("중위 순회:\n");
     while (current != NULL || !isEmptyStack(s)) {
         while (current != NULL) {
             printf("push(%d) ", current->data);
@@ -109,7 +109,8 @@ void LinkInOrder(TreeNode* root) {
         }
         if (!isEmptyStack(s)) {
             current = pop(s);
-            printf("pop(%d) visit(%d) ", current->data, current->data);
+            printf("pop(%d) ", current->data);
+            printf("visit(%d)\n", current->data);
             current = current->right;
         }
     }
@@ -121,7 +122,7 @@ void LinkPostOrder(TreeNode* root) {
     Stack* s1 = createStack();
     Stack* s2 = createStack();
     TreeNode* current = root;
-    printf("후위 순회: ");
+    printf("후위 순회:\n");
     push(s1, current);
     while (!isEmptyStack(s1)) {
         current = pop(s1);
@@ -134,7 +135,8 @@ void LinkPostOrder(TreeNode* root) {
     }
     while (!isEmptyStack(s2)) {
         current = pop(s2);
-        printf("pop(%d) visit(%d) ", current->data, current->data);
+        printf("pop(%d) ", current->data);
+        printf("visit(%d)\n", current->data);
     }
     printf("\n");
     freeStack(s1);
@@ -142,6 +144,7 @@ void LinkPostOrder(TreeNode* root) {
 }
 
 void LinkOrders(TreeNode* root) {
+    printf("순회 결과:\n");
     LinkPreOrder(root);
     LinkInOrder(root);
     LinkPostOrder(root);
