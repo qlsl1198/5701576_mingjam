@@ -1,6 +1,4 @@
-
 #include <stdio.h>
-
 #include <stdlib.h>
 
 typedef struct tree_node {
@@ -27,111 +25,140 @@ TreeNode* insert_node(TreeNode* root, int key) {
     }
     return root;
 }
-
-TreeNode* search_bst(TreeNode* root, int key) {
-    if(root == NULL) return NULL;
-    else{
-        if(key == root->data) return root;
-        else if(key < root->data) return search_bst(root->left, key);
-        else return search_bst(root->right, key);
+TreeNode* GenerateBinaryTree(int inputData[]) {
+    TreeNode* root = NULL;
+    for(int i = 0; i < 15; i++) {
+        root = insert_node(root, inputData[i]);
     }
+    return root;
 }
 
-TreeNode* min_value_node(TreeNode* root){
-    TreeNode* current = root;
-    while(current->left != NULL){
+TreeNode* BinaryTreeInOrder(TreeNode* root){
+    if(root != NULL){
+        BinaryTreeInOrder(root->left);
+        printf("%2d ", root->data);
+        BinaryTreeInOrder(root->right);
+    }
+    return root;
+}
+
+
+typedef struct thread_tree_node {
+    int data;
+    struct thread_tree_node* left, *right;
+    int is_thread;
+} ThreadTree;
+
+
+ThreadTree* create_thread_node(int key) {
+    ThreadTree* temp;
+    temp = (ThreadTree*)malloc(sizeof(ThreadTree));
+    temp->data = key;
+    temp->left = temp->right = NULL;
+    temp->is_thread = 0;
+    return temp;
+}
+
+ThreadTree* insert_thread_node(ThreadTree* root, int key) {
+    if (root == NULL) {
+        return create_thread_node(key);
+    }
+    if (key < root->data) {
+        root->left = insert_thread_node(root->left, key);
+    } else {
+        root->right = insert_thread_node(root->right, key);
+    }
+    return root;
+}
+
+void create_right_thread(ThreadTree* root, ThreadTree** prev) {
+    if (root == NULL) return;
+    
+    create_right_thread(root->left, prev);
+    
+    if (*prev != NULL && (*prev)->right == NULL) {
+        (*prev)->right = root;
+        (*prev)->is_thread = 1;
+    }
+    
+    *prev = root;
+    
+    create_right_thread(root->right, prev);
+}
+
+ThreadTree* GenerateThreadTree(int inputData[]) {
+    ThreadTree* root = NULL;
+    for(int i = 0; i < 15; i++) {
+        root = insert_thread_node(root, inputData[i]);
+    }
+
+    ThreadTree* prev = NULL;
+    create_right_thread(root, &prev);
+    
+    return root;
+}
+
+
+
+void ThreadTreeInOrder(ThreadTree* root) {
+    if (root == NULL) return;
+    
+    ThreadTree* current = root;
+    
+    while (current->left != NULL) {
         current = current->left;
     }
-    return current;
-}
-
-TreeNode* delete_node(TreeNode* root, int key) {
-    TreeNode* temp;
-
-    if(root == NULL) return root;
-    if(root->data > key){
-        root->left = delete_node(root->left, key);
-        return root;
+    
+    while (current != NULL) {
+        printf("%2d ", current->data);
+        
+        if (current->right == NULL) {
+            break;
+        } else if (current->is_thread) {
+            current = current->right;
+        } else {
+            current = current->right;
+            while (current->left != NULL) {
+                current = current->left;
+            }
+        }
     }
-    else if (root->data < key){
-        root->right = delete_node(root->right, key);
-        return root;
-    }
-
-    else{
-        if(root->left == NULL && root->right == NULL){
-            free(root);
-            return NULL;
-        }
-        else if(root->left == NULL && root->right != NULL){
-            temp = root->right;
-            free(root);
-            return temp;
-        }
-
-        else if(root->left != NULL && root->right == NULL){
-            temp = root->left;
-            free(root);
-            return temp;
-        }
-
-        else{
-            temp = min_value_node(root->right);
-            root->data = temp->data;
-            root->right = delete_node(root->right, temp->data);
-            return root;
-        }
-    }  
+    printf("\n");
 }
 
 
 
-
-void inorder_traversal(TreeNode* root) {
-    if (root != NULL) {
-        inorder_traversal(root->left);
-        printf("%2d ", root->data);
-        inorder_traversal(root->right);
-    }
+void free_tree(TreeNode* root) {
+    if (root == NULL) return;
+    free_tree(root->left);
+    free_tree(root->right);
+    free(root);
 }
 
-
-
+void free_thread_tree(ThreadTree* root) {
+    if (root == NULL) return;
+    if (root->left) free_thread_tree(root->left);
+    if (root->right && !root->is_thread) free_thread_tree(root->right);
+    free(root);
+}
 
 int main() {
-    TreeNode* bst = NULL;
-    TreeNode* temp;
-
-    bst = insert_node(bst, 14);
-    bst = insert_node(bst, 5);
-    bst = insert_node(bst, 3);
-    bst = insert_node(bst, 4);
-    bst = insert_node(bst, 2);
-    bst = insert_node(bst, 9);
-    bst = insert_node(bst, 8);
-    bst = insert_node(bst, 18);
-    bst = insert_node(bst, 15);
-    bst = insert_node(bst, 19);
-    bst = insert_node(bst, 16);
-    bst = insert_node(bst, 20);
-
-    printf("inorder traversal: ");
-    inorder_traversal(bst);
+    int inputData[] = {4,1,9,13,15,3,6,14,7,10,12,2,5,8,11};
+    TreeNode* root = GenerateBinaryTree(inputData);
+    
+    printf("binary tree inorder: ");
+    BinaryTreeInOrder(root);
     printf("\n");
 
-    int search_key = 14;
-    temp = search_bst(bst, search_key);
-    if(temp != NULL) printf("key found %d\n", temp->data);
-    else printf("key not found %d\n", search_key);
+    ThreadTree *troot = GenerateThreadTree(inputData);
+    printf("thread tree inorder: ");
+    ThreadTreeInOrder(troot); 
 
-
-    int delete_key = 14;
-    bst = delete_node(bst, delete_key);
-    printf("inorder traversal after deleting %d: ", delete_key);
-    inorder_traversal(bst);
-    printf("\n");
+    free_tree(root);
+    free_thread_tree(troot);
 
     return 0;
 }
+
 
 
