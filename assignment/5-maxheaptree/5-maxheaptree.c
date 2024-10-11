@@ -185,7 +185,7 @@ void deleteMaxHeapNode(TreeNode** root) {
     free(last);
 
     TreeNode* temp = *root;
-    int move = 0;
+    int move = 1;
     print_level_order(*root);
     while (1) {
         TreeNode* largest = temp;
