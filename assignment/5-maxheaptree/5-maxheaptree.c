@@ -1,288 +1,281 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-#define MAX_ELEMENTS 100
-
-typedef int element;
-
-typedef struct tree_node {
-    element data;
-    struct tree_node* left, *right, *parent;
+// 이진 트리 노드 구조체 정의
+typedef struct TreeNode {
+    int data;
+    struct TreeNode* left;
+    struct TreeNode* right;
+    struct TreeNode* parent;
 } TreeNode;
 
-typedef struct {
-    TreeNode* data[MAX_ELEMENTS];
-    int front, rear;
-} QueueType;
-
-// 큐 초기화 함수
-void init_queue(QueueType* q) {
-    q->front = q->rear = 0;
+// 새로운 노드를 생성하고 초기화하는 함수
+TreeNode* createNode(int data) {
+    TreeNode* newNode = (TreeNode*)malloc(sizeof(TreeNode));
+    if (newNode == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(1);
+    }
+    newNode->data = data;
+    newNode->left = newNode->right = newNode->parent = NULL;
+    return newNode;
 }
 
-// 큐가 비어있는지 확인하는 함수
-int is_empty(QueueType* q) {
-    return q->front == q->rear;
+// 두 값을 교환하는 함수
+void swap(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
 }
 
-// 큐에 요소를 추가하는 함수
-void enqueue(QueueType* q, TreeNode* item) {
-    q->rear = (q->rear + 1) % MAX_ELEMENTS;
-    q->data[q->rear] = item;
-}
+// 트리를 레벨 순서로 출력하는 함수
+void printTree(TreeNode* root) {
+    if (!root) return;
 
-// 큐에서 요소를 제거하고 반환하는 함수
-TreeNode* dequeue(QueueType* q) {
-    q->front = (q->front + 1) % MAX_ELEMENTS;
-    return q->data[q->front];
-}
+    TreeNode* queue[1000];
+    int front = 0, rear = 0;
 
-// 새 노드를 생성하는 함수
-TreeNode *createNode(int key) {
-    TreeNode* temp = (TreeNode*)malloc(sizeof(TreeNode));
-    temp->data = key;
-    temp->left = temp->right = temp->parent = NULL;
-    return temp;
-}
+    queue[rear++] = root;
 
-// 레벨 순서로 트리를 출력하는 함수
-void print_level_order(TreeNode* root) {
-    if (root == NULL) return;
-    QueueType q;
-    init_queue(&q);
-    enqueue(&q, root);
-    while (!is_empty(&q)) {
-        TreeNode* temp = dequeue(&q);
-        printf("%d ", temp->data);
-        if (temp->left) enqueue(&q, temp->left);
-        if (temp->right) enqueue(&q, temp->right);
+    while (front < rear) {
+        TreeNode* current = queue[front++];
+        printf("%d ", current->data);
+
+        if (current->left) queue[rear++] = current->left;
+        if (current->right) queue[rear++] = current->right;
     }
     printf("\n");
 }
 
-// 최대 힙에 노드를 삽입하는 함수 (이동 과정 출력)
-void insertMaxHeapNode(TreeNode** root, int key) {
-    if (*root == NULL) {
-        *root = createNode(key);
-        return;
+// 삽입된 노드를 최대 힙 특성을 유지하도록 부모와 교환하는 함수
+void heapifyUp(TreeNode* node, int* movements, TreeNode* root) {
+    while (node->parent && node->data > node->parent->data) {
+        swap(&node->data, &node->parent->data);
+        (*movements)++;
+        printTree(root);  // 트리 전체를 출력
+        node = node->parent;
     }
-
-    QueueType q;
-    init_queue(&q);
-    enqueue(&q, *root);
-
-    TreeNode* temp = NULL;
-    while (!is_empty(&q)) {
-        temp = dequeue(&q);
-        if (temp->left == NULL) {
-            temp->left = createNode(key);
-            temp->left->parent = temp;
-            temp = temp->left;
-            break;
-        } else if (temp->right == NULL) {
-            temp->right = createNode(key);
-            temp->right->parent = temp;
-            temp = temp->right;
-            break;
-        } else {
-            enqueue(&q, temp->left);
-            enqueue(&q, temp->right);
-        }
-    }
-
-    int move = 0;
-    print_level_order(*root);
-    while (temp->parent != NULL && temp->data > temp->parent->data) {
-        int swap = temp->data;
-        temp->data = temp->parent->data;
-        temp->parent->data = swap;
-        temp = temp->parent;
-        print_level_order(*root);
-        move++;
-    }
-    printf("move: %d\n", move);
 }
 
-// 최대 힙에 노드를 삽입하는 함수 (이동 과정 출력 없음)
-void insertWithoutPrint(TreeNode** root, int key) {
+// 두 자식 노드를 비교하여 힙을 재정렬하는 함수
+void heapifyDown(TreeNode* node, int* movements, TreeNode* root) {
+    while (true) {
+        TreeNode* largest = node;
+        TreeNode* left = node->left;
+        TreeNode* right = node->right;
+
+        // 왼쪽 자식과 비교하여 더 큰 자식 선택
+        if (left && left->data > largest->data)
+            largest = left;
+
+        // 오른쪽 자식과 비교하여 더 큰 자식 선택
+        if (right && right->data > largest->data)
+            largest = right;
+
+        // 더 큰 자식과 현재 노드를 교환
+        if (largest != node) {
+            swap(&node->data, &largest->data);  // 값 교환
+            (*movements)++;  // 이동 횟수 증가
+            printTree(root);  // 트리 상태 출력
+            node = largest;   // 현재 노드를 갱신하여 계속 힙 재정렬
+        } else {
+            break;  // 더 이상 교환이 필요 없으면 종료
+        }
+    }
+}// 최대 힙 트리에 노드를 삽입하는 함수
+void InsertMaxHeapTree(TreeNode** root, int data, int* movements, bool showOutput) {
     if (*root == NULL) {
-        *root = createNode(key);
+        *root = createNode(data);
+        if (showOutput) printTree(*root);
         return;
     }
 
-    QueueType q;
-    init_queue(&q);
-    enqueue(&q, *root);
-
-    TreeNode* temp = NULL;
-    while (!is_empty(&q)) {
-        temp = dequeue(&q);
-        if (temp->left == NULL) {
-            temp->left = createNode(key);
-            temp->left->parent = temp;
-            temp = temp->left;
-            break;
-        } else if (temp->right == NULL) {
-            temp->right = createNode(key);
-            temp->right->parent = temp;
-            temp = temp->right;
-            break;
-        } else {
-            enqueue(&q, temp->left);
-            enqueue(&q, temp->right);
-        }
-    }
+    TreeNode* queue[1000];
+    int front = 0, rear = 0;
     
-    while (temp->parent != NULL && temp->data > temp->parent->data) {
-        int swap = temp->data;
-        temp->data = temp->parent->data;
-        temp->parent->data = swap;
-        temp = temp->parent;
+    queue[rear++] = *root;
 
+    while (front < rear) {
+        TreeNode* current = queue[front++];
+        
+        if (current->left == NULL) {
+            current->left = createNode(data);
+            current->left->parent = current;
+            if (showOutput) printTree(*root);
+            heapifyUp(current->left, movements, *root);
+            break;
+        } else {
+            queue[rear++] = current->left;
+        }
+
+        if (current->right == NULL) {
+            current->right = createNode(data);
+            current->right->parent = current;
+            if (showOutput) printTree(*root);
+            heapifyUp(current->right, movements, *root);
+            break;
+        } else {
+            queue[rear++] = current->right;
+        }
     }
 }
 
-// 입력 데이터로 최대 힙 트리를 생성하는 함수
-TreeNode *generateMaxHeapTree(int inputData[], int size) {
-    TreeNode *root = NULL;
-    for (int i = 0; i < size; i++) {
-        insertWithoutPrint(&root, inputData[i]);
-    }
-    return root;
-}
+// 트리에서 마지막 노드를 찾는 함수
+TreeNode* findLastNode(TreeNode* root) {
+    if (root == NULL) return NULL;
 
-// 최대 힙에서 최대값(루트)을 삭제하는 함수
-void deleteMaxHeapNode(TreeNode** root) {
-    if (*root == NULL) return;
+    TreeNode* queue[1000];
+    int front = 0, rear = 0;
 
-    QueueType q;
-    init_queue(&q);
-    enqueue(&q, *root);
+    queue[rear++] = root;
     TreeNode* last = NULL;
 
-    while (!is_empty(&q)) {
-        last = dequeue(&q);
-        if (last->left) enqueue(&q, last->left);
-        if (last->right) enqueue(&q, last->right);
+    while (front < rear) {
+        last = queue[front++];
+
+        if (last->left) queue[rear++] = last->left;
+        if (last->right) queue[rear++] = last->right;
     }
 
-    int deleted = (*root)->data;
-    (*root)->data = last->data;
+    return last;
+}
 
-    if (last->parent) {
-        if (last->parent->left == last)
-            last->parent->left = NULL;
-        else
-            last->parent->right = NULL;
+// 최대 힙 트리에서 루트 노드를 삭제하는 함수
+void deleteRoot(TreeNode** root, int* movements) {
+    if (*root == NULL) {
+        printf("트리가 비어 있습니다.\n");
+        return;
     }
-
-    if (last == *root) {
-        free(last);
+     
+    TreeNode* lastNode = findLastNode(*root);  // 마지막 노드를 찾음
+    if (lastNode == *root) {  // 트리에 노드가 하나밖에 없으면
+        free(*root);
         *root = NULL;
         return;
     }
 
-    free(last);
+    // 마지막 노드와 루트 노드를 교환한 후 마지막 노드를 삭제
+    swap(&(*root)->data, &lastNode->data);
+    (*movements)++;  // 루트와 마지막 노드의 값 교환 시 이동 횟수 증가
 
-    TreeNode* temp = *root;
-    int move = 1;
-    print_level_order(*root);
-    while (1) {
-        TreeNode* largest = temp;
-        if (temp->left && temp->left->data > largest->data)
-            largest = temp->left;
-        if (temp->right && temp->right->data > largest->data)
-            largest = temp->right;
-        
-        if (largest == temp) break;
+    if (lastNode->parent->left == lastNode)
+        lastNode->parent->left = NULL;
+    else
+        lastNode->parent->right = NULL;
 
-        int swap = temp->data;
-        temp->data = largest->data;
-        largest->data = swap;
-        temp = largest;
-        print_level_order(*root);
-        move++;
-    }
+    free(lastNode);
 
-    printf("Deleted: %d, move: %d\n", deleted, move);
+    // 루트에서부터 힙 재정렬
+    printTree(*root);
+    heapifyDown(*root, movements, *root);
 }
 
-// 트리를 레벨별로 출력하는 함수
-void printTree(TreeNode* root) {
-    if (root == NULL) return;
-    QueueType q;
-    init_queue(&q);
-    enqueue(&q, root);
-    int level = 1;
-    while (!is_empty(&q)) {
-        int level_size = (q.rear - q.front + MAX_ELEMENTS) % MAX_ELEMENTS;
-        printf("[%d] ", level);
-        for (int i = 0; i < level_size; i++) {
-            TreeNode* temp = dequeue(&q);
-            printf("%d ", temp->data);
-            if (temp->left) enqueue(&q, temp->left);
-            if (temp->right) enqueue(&q, temp->right);
-        }
-        printf("\n");
-        level++;
-    }
+void printLevelOrder(TreeNode* root){
+  if(root == NULL){
+      printf("트리가 비어 있습니다.\n");
+      return;
+  }
+
+  TreeNode* queue[1000];
+  int level[1000];
+  int front = 0, rear = 0;
+
+  queue[rear] = root;
+  level[rear++] = 1;
+
+  int currentLevel = 1;
+
+  printf("[%d] ", currentLevel);
+
+  // 큐를 사용하여 레벨별로 트리를 출력
+  while(front < rear){
+      TreeNode* current = queue[front];
+      int nodeLevel = level[front++];
+
+      if(nodeLevel > currentLevel){
+          currentLevel = nodeLevel;
+          printf("\n[%d] ", currentLevel);
+      }
+
+      printf("%d ", current -> data);
+
+      if(current -> left != NULL){
+          queue[rear] = current -> left;
+          level[rear++] = nodeLevel + 1;
+      }
+      if(current -> right != NULL){
+          queue[rear] = current -> right;
+          level[rear++] = nodeLevel + 1;
+      }
+  }
+  printf("\n");
 }
 
-// 트리의 모든 노드를 해제하는 함수
-void freeTree(TreeNode* root) {
-    if (root == NULL) return;
-    freeTree(root->left);
-    freeTree(root->right);
-    free(root);
-}
-
-// 사용자 인터페이스를 실행하는 함수
-void runUserInterface(TreeNode** root) {
-    while (1) {
-        printf("┌────────────────┐\n");
-        printf("│ i  : 노드 추가        │\n");
-        printf("│ d  : 노드 삭제        │\n");
-        printf("│ p  : 레벨별 출력      │\n");
-        printf("│ c  : 종료             │\n");
-        printf("└────────────────┘\n");
+// 사용자 인터페이스 실행 함수
+void runUserInterface(TreeNode** root){
+    while(true){
+        char choice;
+        int data, movements;
+        printf("---------------------\n");
+        printf("| i : 노드 추가     |\n");
+        printf("| d : 루트 삭제     |\n");
+        printf("| p : 레벨별 출력   |\n");
+        printf("| c : 종료          |\n");
+        printf("---------------------\n\n");
         printf("메뉴 입력: ");
-        char input;
-        scanf(" %c", &input);
-        if (input == 'i') {
-            int key;
-            printf("추가할 값 입력: ");
-            scanf("%d", &key);
-            insertMaxHeapNode(root, key);
-        }
-        else if (input == 'd') {
-            deleteMaxHeapNode(root);
-        }
-        else if (input == 'p') {
-            printTree(*root);
-        }
-        else if (input == 'c') {
-            printf("프로그램을 종료합니다.\n");
-            break;
-        }
-        else {
-            printf("잘못된 입력입니다.\n");
+        scanf(" %c", &choice);
+        
+        switch(choice){
+            case 'i':  // 노드 추가
+                printf("추가할 값 입력: ");
+                scanf("%d", &data);
+                movements = 0;
+                InsertMaxHeapTree(root, data, &movements, true);
+                printf("노드가 이동된 횟수: %d\n", movements);
+                break;
+            case 'd':  // 루트 노드 삭제
+                movements = 0;
+                deleteRoot(root, &movements);
+                printf("노드가 이동된 횟수: %d\n", movements);
+                break;
+            case 'p':  // 트리 레벨별 출력
+                printf("트리 레벨별 출력\n");
+                printLevelOrder(*root);
+                break;
+            case 'c':  // 프로그램 종료
+                exit(1);
+                break;
+            default:
+                printf("잘못된 선택입니다.\n");
         }
     }
+}
+
+// 트리 생성 함수
+TreeNode *GenerateMaxHeapTree(int inputData[], int size, int* movements){
+    TreeNode* root = NULL;
+
+     for(int i = 0; i < size; i++){
+        InsertMaxHeapTree(&root, inputData[i], movements, false);
+    }
+
+    return root;
 }
 
 // 메인 함수
-int main() {
-    // 초기 데이터 설정
-    int inputData[] = {90, 89, 70, 36, 75, 63, 13, 21, 18, 5};
+int main(){
+    // 초기 데이터를 이용해 트리 생성
+    int inputData[] = {90, 89, 70, 36, 75, 63, 65, 21, 18, 53};
     int size = sizeof(inputData) / sizeof(inputData[0]);
+    int movements = 0;
     
-    // 최대 힙 트리 생성
-    TreeNode *root = generateMaxHeapTree(inputData, size);
+    TreeNode* root = GenerateMaxHeapTree(inputData, size, &movements);
 
     // 사용자 인터페이스 실행
     runUserInterface(&root);
+
+    free(root);
     
-    // 메모리 해제
-    freeTree(root);
     return 0;
 }
